@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import path from "path";
+import fs from "fs";
 import userroutes from "./routes/auth.js";
 import videoroutes from "./routes/video.js";
 import likeroutes from "./routes/like.js";
@@ -12,6 +13,12 @@ import historyrroutes from "./routes/history.js";
 import commentroutes from "./routes/comment.js";
 
 dotenv.config();
+
+// Create uploads folder if it doesn't exist (needed on Render)
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
+
 const app = express();
 
 // ── CORS — must be FIRST before any routes ──────────────────────────────────
