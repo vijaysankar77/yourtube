@@ -23,6 +23,7 @@
     "multer": "^2.0.1",
     "nodemon": "^3.1.10",
     "razorpay": "^2.9.6",
-    "nodemailer": "^6.9.14"
+    "nodemailer": "^6.9.14",
+    "socket.io": "^4.8.1"
   }
 }

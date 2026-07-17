@@ -8,7 +8,9 @@ import {
   Share,
   ThumbsDown,
   ThumbsUp,
+  Users,
 } from "lucide-react";
+import { useRouter } from "next/router";
 import { formatDistanceToNow } from "date-fns";
 import { useUser } from "@/lib/AuthContext";
 import axiosInstance from "@/lib/axiosinstance";
@@ -21,8 +23,14 @@ const VideoInfo = ({ video }: any) => {
   const [isDisliked, setIsDisliked] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const { user } = useUser();
+  const router = useRouter();
   const [isWatchLater, setIsWatchLater] = useState(false);
   const [downloading, setDownloading] = useState(false);
+
+  const startWatchParty = () => {
+    const roomId = Math.random().toString(36).substring(2, 10);
+    router.push(`/watch-party/${roomId}?videoId=${video._id}`);
+  };
 
   useEffect(() => {
     setlikes(video?.Like || 0);
@@ -195,6 +203,11 @@ const VideoInfo = ({ video }: any) => {
           <Button variant="ghost" size="sm" className="bg-gray-100 rounded-full">
             <Share className="w-5 h-5 mr-2" />
             Share
+          </Button>
+
+          <Button variant="ghost" size="sm" className="bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200" onClick={startWatchParty}>
+            <Users className="w-5 h-5 mr-2" />
+            Watch Party
           </Button>
 
           <Button variant="ghost" size="sm" className="bg-gray-100 rounded-full" onClick={handleDownload} disabled={downloading}>

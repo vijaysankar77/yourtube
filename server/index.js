@@ -1,5 +1,6 @@
 import express from "express";
-import cors from "cors";
+import { createServer } from "http";
+import { Server as SocketIOServer } from "socket.io";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
@@ -23,6 +24,70 @@ if (!fs.existsSync("uploads")) {
 }
 
 const app = express();
+const httpServer = createServer(app);
+
+// ── Socket.IO ────────────────────────────────────────────────────────────────
+const io = new SocketIOServer(httpServer, {
+  cors: { origin: "*", methods: ["GET", "POST"] },
+});
+
+const rooms = new Map();
+
+io.on("connection", (socket) => {
+  socket.on("join-room", ({ roomId, username, videoId }) => {
+    socket.join(roomId);
+    if (!rooms.has(roomId)) {
+      rooms.set(roomId, { videoId, currentTime: 0, playing: false, participants: new Map() });
+    }
+    const room = rooms.get(roomId);
+    room.participants.set(socket.id, { socketId: socket.id, username });
+    socket.emit("room-state", {
+      videoId: room.videoId,
+      currentTime: room.currentTime,
+      playing: room.playing,
+      participants: [...room.participants.values()],
+    });
+    socket.to(roomId).emit("user-joined", { socketId: socket.id, username });
+    io.to(roomId).emit("participants-updated", [...room.participants.values()]);
+  });
+
+  socket.on("video-sync", ({ roomId, currentTime, playing, seeked }) => {
+    const room = rooms.get(roomId);
+    if (room) { room.currentTime = currentTime; room.playing = playing; }
+    socket.to(roomId).emit("video-sync", { currentTime, playing, seeked });
+  });
+
+  socket.on("chat-message", ({ roomId, message, username }) => {
+    io.to(roomId).emit("chat-message", {
+      id: Date.now(),
+      message,
+      username,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    });
+  });
+
+  socket.on("webrtc-offer", ({ offer, to }) => {
+    io.to(to).emit("webrtc-offer", { offer, from: socket.id });
+  });
+  socket.on("webrtc-answer", ({ answer, to }) => {
+    io.to(to).emit("webrtc-answer", { answer, from: socket.id });
+  });
+  socket.on("ice-candidate", ({ candidate, to }) => {
+    io.to(to).emit("ice-candidate", { candidate, from: socket.id });
+  });
+
+  socket.on("disconnecting", () => {
+    for (const roomId of socket.rooms) {
+      if (rooms.has(roomId)) {
+        const room = rooms.get(roomId);
+        room.participants.delete(socket.id);
+        socket.to(roomId).emit("user-left", { socketId: socket.id });
+        io.to(roomId).emit("participants-updated", [...room.participants.values()]);
+        if (room.participants.size === 0) rooms.delete(roomId);
+      }
+    }
+  });
+});
 
 // ── CORS — must be FIRST before any routes ──────────────────────────────────
 app.use((req, res, next) => {
@@ -55,7 +120,7 @@ app.use("/subscription", subscriptionroutes);
 app.use("/otp", otproutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`server running on port ${PORT}`);
 });
 
