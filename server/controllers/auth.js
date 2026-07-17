@@ -35,7 +35,7 @@ export const login = async (req, res) => {
 };
 export const updateprofile = async (req, res) => {
   const { id: _id } = req.params;
-  const { channelname, description, plan } = req.body;
+  const { channelname, description, plan, theme } = req.body;
   if (!mongoose.Types.ObjectId.isValid(_id)) {
     return res.status(500).json({ message: "User unavailable..." });
   }
@@ -47,6 +47,7 @@ export const updateprofile = async (req, res) => {
           ...(channelname !== undefined && { channelname }),
           ...(description !== undefined && { description }),
           ...(plan !== undefined && { plan }),
+          ...(theme !== undefined && { theme }),
         },
       },
       { new: true }
