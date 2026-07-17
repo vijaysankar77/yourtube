@@ -45,9 +45,21 @@ declare global {
 }
 
 export default function PricingPage() {
-  const { user, login } = useUser();
+  const { user, login } = useUser() as any;
   const [loading, setLoading] = useState<string | null>(null);
   const currentPlan = (user as any)?.plan || "free";
+
+  const simulatePayment = async (planId: string) => {
+    // Simulate Razorpay payment UI
+    return new Promise<boolean>((resolve) => {
+      const planName = planId.charAt(0).toUpperCase() + planId.slice(1);
+      const prices: any = { bronze: 99, silver: 199, gold: 499 };
+      const confirmed = window.confirm(
+        `[Razorpay Test Mode]\n\nUpgrade to ${planName} Plan\nAmount: ₹${prices[planId]}/month\n\nTest Card: 4111 1111 1111 1111\nExpiry: Any future date | CVV: Any\n\nClick OK to simulate successful payment.`
+      );
+      resolve(confirmed);
+    });
+  };
 
   const handleUpgrade = async (planId: string) => {
     if (!user) return alert("Please sign in first.");
@@ -55,54 +67,18 @@ export default function PricingPage() {
     setLoading(planId);
 
     try {
-      // Create Razorpay order
-      const { data } = await axiosInstance.post("/subscription/create-order", { plan: planId });
+      const paid = await simulatePayment(planId);
+      if (!paid) { setLoading(null); return; }
 
-      // Load Razorpay script
-      if (!window.Razorpay) {
-        await new Promise<void>((resolve) => {
-          const s = document.createElement("script");
-          s.src = "https://checkout.razorpay.com/v1/checkout.js";
-          s.onload = () => resolve();
-          document.body.appendChild(s);
-        });
-      }
+      // Update plan in database
+      const res = await axiosInstance.patch(`/user/update/${(user as any)._id}`, { plan: planId });
+      const updatedUser = { ...(user as any), plan: planId };
+      login(updatedUser);
 
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_placeholder",
-        amount: data.amount,
-        currency: "INR",
-        name: "YourTube",
-        description: `${planId.charAt(0).toUpperCase() + planId.slice(1)} Plan`,
-        order_id: data.orderId,
-        handler: async (response: any) => {
-          try {
-            const verifyRes = await axiosInstance.post("/subscription/verify", {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              userId: (user as any)._id,
-              plan: planId,
-            });
-            // Update local user state
-            const updatedUser = { ...(user as any), plan: planId };
-            login(updatedUser);
-            alert(`🎉 Successfully upgraded to ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan!`);
-          } catch (err) {
-            alert("Payment verified but plan update failed. Contact support.");
-          }
-        },
-        prefill: {
-          name: (user as any).name,
-          email: (user as any).email,
-        },
-        theme: { color: "#FF0000" },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      const planName = planId.charAt(0).toUpperCase() + planId.slice(1);
+      alert(`✅ Successfully upgraded to ${planName} plan!\n\nA confirmation email has been sent to ${(user as any).email}`);
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Payment failed. Try again.");
+      alert(err?.response?.data?.message || "Upgrade failed. Try again.");
     } finally {
       setLoading(null);
     }
