@@ -2,8 +2,8 @@ import Download from "../Modals/download.js";
 import Video from "../Modals/video.js";
 import User from "../Modals/Auth.js";
 
-// Free users: 1 download/day, Premium: unlimited
-const DAILY_LIMIT = { free: 1, premium: 100 };
+// Download limits per plan
+const DAILY_LIMIT = { free: 1, bronze: 5, silver: 20, gold: 999 };
 
 export const downloadVideo = async (req, res) => {
   const { userId, userPlan = "free" } = req.body;
@@ -25,8 +25,8 @@ export const downloadVideo = async (req, res) => {
       return res.status(429).json({
         message:
           userPlan === "free"
-            ? "Free users can only download 1 video per day. Upgrade to premium for more."
-            : "Daily download limit reached.",
+            ? "Free users can only download 1 video per day. Upgrade to Bronze, Silver, or Gold for more."
+            : `${userPlan.charAt(0).toUpperCase() + userPlan.slice(1)} plan daily limit (${limit}) reached.`,
         limit,
         used: todayCount,
       });

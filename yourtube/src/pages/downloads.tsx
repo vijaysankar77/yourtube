@@ -10,8 +10,8 @@ export default function DownloadsPage() {
   const [todayCount, setTodayCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const userPlan = user?.plan || "free";
-  const dailyLimit = userPlan === "premium" ? 100 : 1;
+  const userPlan = (user as any)?.plan || "free";
+  const dailyLimit = userPlan === "free" ? 1 : userPlan === "bronze" ? 5 : userPlan === "silver" ? 20 : 999;
 
   useEffect(() => {
     if (!user) return;
