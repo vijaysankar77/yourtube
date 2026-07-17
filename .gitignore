@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Next.js
+yourtube/.next/
+yourtube/out/
+
+# Server uploads (don't commit video files)
+server/uploads/
+
+# OS
+.DS_Store
