@@ -19,8 +19,9 @@ function getTimeBasedTheme() {
   return hour >= 10 && hour < 12 ? "light" : "dark";
 }
 
-// Apply theme to document
+// Apply theme to document (only runs in browser)
 function applyTheme(theme) {
+  if (typeof window === "undefined") return;
   const root = document.documentElement;
   if (theme === "dark") {
     root.classList.add("dark");
@@ -30,8 +31,9 @@ function applyTheme(theme) {
   localStorage.setItem("yt-theme", theme);
 }
 
-// Simple device fingerprint
+// Simple device fingerprint (browser only)
 function getDeviceFingerprint() {
+  if (typeof window === "undefined") return "server";
   const raw = navigator.userAgent + screen.width + screen.height + navigator.language;
   let hash = 0;
   for (let i = 0; i < raw.length; i++) {
@@ -148,7 +150,7 @@ export const UserProvider = ({ children }) => {
     }
 
     // Apply saved or time-based theme
-    const savedTheme = localStorage.getItem("yt-theme") || getTimeBasedTheme();
+    const savedTheme = (typeof window !== "undefined" && localStorage.getItem("yt-theme")) || getTimeBasedTheme();
     setThemeState(savedTheme);
     applyTheme(savedTheme);
 
