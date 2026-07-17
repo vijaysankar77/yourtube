@@ -22,6 +22,7 @@ const VideoInfo = ({ video }: any) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const { user } = useUser();
   const [isWatchLater, setIsWatchLater] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     setlikes(video?.Like || 0);
@@ -91,6 +92,31 @@ const VideoInfo = ({ video }: any) => {
       }
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!user) return alert("Please sign in to download videos.");
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const res = await axiosInstance.post(`/download/${video._id}`, {
+        userId: user._id,
+        userPlan: user.plan || "free",
+      });
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+      const url = `${backendUrl}/${res.data.filepath}`;
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = video.videotitle || "video.mp4";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Download failed.";
+      alert(msg);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -171,9 +197,9 @@ const VideoInfo = ({ video }: any) => {
             Share
           </Button>
 
-          <Button variant="ghost" size="sm" className="bg-gray-100 rounded-full">
+          <Button variant="ghost" size="sm" className="bg-gray-100 rounded-full" onClick={handleDownload} disabled={downloading}>
             <Download className="w-5 h-5 mr-2" />
-            Download
+            {downloading ? "Downloading..." : "Download"}
           </Button>
 
           <Button variant="ghost" size="icon" className="bg-gray-100 rounded-full">
