@@ -1,4 +1,4 @@
-import { Bell, Menu, Mic, Search, User, VideoIcon } from "lucide-react";
+import { Bell, Menu, Mic, Moon, Search, Sun, User, VideoIcon } from "lucide-react";
 import React, { useState } from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
@@ -16,7 +16,7 @@ import { useRouter } from "next/router";
 import { useUser } from "@/lib/AuthContext";
 
 const Header = () => {
-  const { user, logout, handlegooglesignin } = useUser();
+  const { user, logout, handlegooglesignin, theme, toggleTheme } = useUser();
   // const user: any = {
   //   id: "1",
   //   name: "John Doe",
@@ -38,7 +38,7 @@ const Header = () => {
     }
   };
   return (
-    <header className="flex items-center justify-between px-4 py-2 bg-white border-b">
+    <header className="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 border-b dark:border-gray-700">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon">
           <Menu className="w-6 h-6" />
@@ -78,6 +78,10 @@ const Header = () => {
         </Button>
       </form>
       <div className="flex items-center gap-2">
+        {/* Theme toggle */}
+        <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme">
+          {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </Button>
         {user ? (
           <>
             <Button variant="ghost" size="icon">

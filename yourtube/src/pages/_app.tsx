@@ -7,7 +7,7 @@ import { UserProvider } from "../lib/AuthContext";
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <UserProvider>
-      <div className="min-h-screen bg-white text-black">
+      <div className="min-h-screen bg-white dark:bg-gray-950 dark:text-white text-black">
         <title>Your-Tube Clone</title>
         <Header />
         <Toaster />
